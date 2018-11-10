@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>学员随机抽</title>
+<link href="style/fire.css" rel="stylesheet" type="text/css" />
+<script src="config.js"></script>
+<script src="script/jquery-1.11.0.min.js"></script>
+<script src="script/Ball.js"></script>
+</head>
+
+<body>
+<div id="mainbox"></div>
+<a id="fireBut">开始</a>
+<div id="editBox">
+<button value="1" id="copyBut" disabled>数据备份</button>
+<button value="1" id="restoreBut">数据清除</button>
+<button value="1" id="showScore" >显示得分</button>
+<button value="1" id="editScore" >保存得分</button>
+</div>
+<script>
+/*
+*在config.js中可以设置相关参数
+* 点击显示得分按钮可显示学员分数，点击分数对得分进行编辑
+* 
+*/
+window.ball_glo.code=0;
+
+$(function(){
+	pageinit();
+	createBox();
+	initNameList();
+})
+
+function pageinit(){
+	$("a").attr("href","javascript:");
+	$("#mainbox").css({overflow:"hidden"}).width($(window).width()).height($(window).height());
+	setButpr();
+	$("#fireBut").click(function(){
+		
+		createBall(dataConfig.amount,this);
+		ScoreInit();
+		
+	})
+	
+	//数据备份事件
+	$("#copyBut").on("click",function(){
+		copyStorage();
+	})
+	//数据还原事件
+	$("#restoreBut").on("click",function(){
+		//restoreList();
+		if(window.confirm("是否真的要清除数据？")){
+			clearLocalStorage();
+		}
+		
+	})
+	//分数显示
+	$("#showScore").on("click",function(){
+		if($(this).text()=="显示得分"){
+			$(this).text("隐藏得分");
+			showScore();
+		}else{
+			$(this).text("显示得分");
+			hideScore();
+		}
+		
+	})
+	
+	
+	//生成泡泡
+	function createBall(numb,but){
+		if(numb>0){
+			for(var i=0;i<numb;i++){
+				//console.log(i);
+				setTimeout(function(i){
+					
+					//计算初始角度
+					var angle=Math.ceil(Math.random()*120)+200;
+					//var ind=ball_glo.code>6?ball_glo.code-Math.floor(ball_glo.code/6):ball_glo.code;
+					//console.log(ind);
+					//var angle=200+ind*20;
+					//计算按钮中心点
+					var butCleft=$(but).offset().left+$(but).width()/2,
+						butCtop=$(but).offset().top+$(but).height()/2;
+					//计算小球初始位置
+					var ballLeft=butCleft+60*Math.cos(angle*Math.PI/180),
+						ballTop=butCtop+60*Math.sin(angle*Math.PI/180);
+					//获取中奖名字
+					var targetBox=getWinName();
+					console.log(targetBox);
+					var ball=new Ball({left:ballLeft,top:ballTop,angle:angle,target:targetBox,content:ball_glo.code++});
+					
+					ball.move_go();
+					ball_glo.collideE_all=document.querySelectorAll(".collideE");
+				},i*200);
+				
+			}
+		}
+	}
+}
+
+
+
+function setButpr(){
+	var $but=$("#fireBut");
+	$but[0].pixelTop=$but.offset().top;
+	$but[0].pixelLeft=$but.offset().left;
+	$but[0].pixelWidth=$but.width();
+	$but[0].pixelHeight=$but.height();
+	$but[0].centerLeft=$but[0].pixelLeft+$but.width()/2;
+	$but[0].centerTop=$but[0].pixelTop+$but.height()/2;
+	//$but[0].id=createCode();
+}
+
+//创建名单盒子
+function createBox(){
+	var namelist=getNameArr();
+	var $mainbox=$("#mainbox");
+	var Scoredata=ScoreInit();
+	
+	$.each(namelist,function(i){
+		var nameBox=$("<div class='nameBox'><p>"+namelist[i]+"</p></div>");
+		var scoreBox=$("<span style='display: none'>"+Scoredata[i].score+"</span>");
+		nameBox.append(scoreBox);
+		$mainbox.append(nameBox);
+		judgePass(Scoredata[i].score,scoreBox);
+		scoreBox.click(function(){
+			showEdit($(this));
+		});
+		
+	})
+	
+	orderBox();
+	
+}
+/*判断得分*/
+function judgePass(score,$scoreBox){
+	if(score<dataConfig.pass){
+		$scoreBox.css("color","#FF0000");
+	}else{
+		$scoreBox.css("color","#009900");
+	}
+}
+//名单位置重置
+function orderBox(){
+	var win_w=$(window).width(),
+		win_h=$(window).height();
+	var numb_x=win_w/dataConfig.col,
+		numb_y=win_h/dataConfig.row;
+	var $nameBoxAll=$(".nameBox");
+	$nameBoxAll.width(numb_x-2);
+	$nameBoxAll.height(numb_y-2);
+	$nameBoxAll.css("line-height",numb_y-2+"px");
+	
+}
+//生成中奖名单
+function getWinName(){
+	var code=Math.floor(Math.random()*getNameArr().length);
+	var	nameBox=$(".nameBox")[code];
+
+		if(window.localStorage){
+			if(window.localStorage["nameList"]&&window.localStorage["nameList"]!=""){
+				var namelist=window.localStorage["nameList"].split(",");
+				
+				if(ifDuplication(namelist,$(nameBox).children("p").text())){
+					return getWinName();
+					
+				}else{
+					setStor($(nameBox).children("p").text());
+					return nameBox;
+				}
+				
+			}else{
+				setStor($(nameBox).children("p").text());
+				return nameBox;
+			}
+		}
+
+}
+//判断重名
+function ifDuplication(list,name){
+	var code=false;
+	
+	for(var i=0;i<list.length;i++){
+		if(list[i]==name){
+			code=true;
+		}
+	}
+	return code;
+}
+//初始化已选定的名单
+function initNameList(){
+	if(window.localStorage){
+		if(window.localStorage["nameList"]&&window.localStorage["nameList"]!=""){
+			var selected=window.localStorage["nameList"].split(",");
+			var namelist=getNameArr();
+			for(var i in selected){
+				$(".nameBox:contains('"+selected[i]+"')").removeClass("selected").addClass("selected");
+			}
+		}
+	}
+}
+//清除本地存储
+function clearLocalStorage(){
+	if(window.localStorage){
+		window.localStorage["nameList"]=dataConfig.notDraw;
+		window.localStorage["Score"]="";
+		window.location.reload();
+		
+		
+	}
+}
+/*获取学员*/
+function getNameArr(){
+	var arr=dataConfig.studentAll;
+	return arr;
+}
+//存储备份
+function copyStorage(){
+	if(confirm("是否备份当前抽奖数据！","数据备份提示")){
+		if(window.localStorage){
+		window.localStorage["copyList"]=window.localStorage["nameList"];
+			alert(window.localStorage["copyList"]);
+		}
+	}
+	
+}
+//备份还原
+function restoreList(){
+	if(window.localStorage){
+		window.localStorage["nameList"]=window.localStorage["copyList"];
+	}
+}
+//写入得分数据
+function setEditScore(){
+	var ScoreDate=[];
+	
+	if(window.localStorage){
+		if(window.localStorage["Score"]&&window.localStorage["Score"]!=""){
+		
+			var allData=[];
+			$(".nameBox").each(function(i){
+				allData[i]={"name":$(this).children("p").text(),"score":$(this).children("span").text()}
+			});
+			window.localStorage["Score"]=JSON.stringify(allData);
+		}
+
+	}
+}
+/*得分初始化*/
+function ScoreInit(){
+	var namelist=getNameArr();
+	var ScoreDate=[];
+	if(window.localStorage["Score"]&&window.localStorage["Score"]!=""){
+		ScoreDate=JSON.parse(window.localStorage["Score"]);
+	}else{
+		$.each(namelist,function(i){
+				ScoreDate[i]={"name":namelist[i],"score":dataConfig.score};
+		});
+		window.localStorage["Score"]=JSON.stringify(ScoreDate);
+	}
+	return ScoreDate;
+}
+//显示得分
+function showScore(){
+	
+		var $nameBox=$(".nameBox");
+		
+		$nameBox.children("span").show();
+
+		
+}
+//隐藏得分
+function hideScore(){
+	var $nameBox=$(".nameBox");
+	$nameBox.children("span").hide();
+}
+//显示编辑框
+function showEdit($span){
+	var $edBox=$("<input type='text' class='edBox' style='position:absolute;'/>");
+	$edBox.val($span.text());
+	$span.append($edBox);
+	$edBox.offset({top:$span.offset().top,left:$span.offset().left});
+	$edBox.focus();
+	$edBox.on("click",function(event){
+		event.stopPropagation();
+			
+	});
+	$edBox.on("keydown",function(e){
+		if(e.keyCode=="13"){
+			seveEdit(this);
+		}
+	})
+	$edBox.on("blur",function(){
+		seveEdit(this);
+	})
+}
+//保存编辑
+function seveEdit(edBox){
+	$nameBox=$(edBox).parent();
+	judgePass($(edBox).val(),$nameBox);
+	$nameBox.text($(edBox).val());
+	
+	setEditScore();
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+@charset "utf-8";
+/* CSS Document */
+body{ margin:0; padding:0; font-size:14px;}
+p{ margin:0px ; padding:0px;}
+@media screen and (max-width:400px){ 
+	body{font-size:10px;}
+}
+@media screen and (min-width:401px) and (max-width:800px){ 
+	body{font-size:14px;}
+}
+@media screen and (min-width:801px){ 
+	body{font-size:22px;}
+}
+
+#fireBut{ position:absolute;  width:4em; height:2em; border-radius:5em 5em 0em 0em; background:#060; color:#FFF; text-align:center; line-height:2.5em; left:50%; margin-left:-2.5em; bottom:0px;cursor:pointer;border:2px solid #060; text-decoration:none; font-size:1.5em; font-weight:bold; }
+#fireBut:hover{ border:2px solid #F00}
+#fireBut:active{ background:#090;}
+.ball{ width:50px; height:50px; background-color:#066; border:2px solid #060; border-radius:2em;box-shadow:2px 2px 5px 1px rgba(0,0,0,.5); position:absolute; text-align:center; font-size:1.5em; color:#FFF; font-weight:bold; 
+	background:radial-gradient(40% 40%,#0F0,#066);
+	background:-webkit-radial-gradient(40% 40%,#0F0,#066);
+	
+}
+.targetbg{ border-radius:2em; width:50px; height:50px; background:#F60; position:absolute;}
+.nameBox{float: left; background:#CCC; color:#333; border:1px solid #FFF;  font-size:1.2em; font-weight:bold; position:relative;}
+.selected{ background:#999; color:#666;}
+.choised{ background:#900; color:#FFF;}
+#mainbox{overflow:hidden;}
+botton{ width:3em;}
+.nameBox p{text-align:center; width:100%; }
+.nameBox span{ position:absolute; color:#060; top: 0px; left: 0px; line-height: 1em;}
+#editBox{ position:absolute; bottom:5px; left:5px; width:7em; min-height:3em;}
+.edBox{ width:3em; position:absolute;}
+
+/*
+#copyBut{ position:absolute; bottom:0px; left:50%; margin-left:-12em;}
+#restoreBut{ position:absolute; bottom:0px; left:50%; margin-left:5em;}
+*/
